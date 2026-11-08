@@ -1,6 +1,6 @@
 /** Login page */
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthContext'
 import { parseApiError } from '@/lib/api-error'
 import { Button, Input } from '@/components/ui'
@@ -43,6 +43,10 @@ export function LoginPage() {
       <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
       <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       <Button type="submit" loading={loading} className="w-full">Masuk</Button>
+      <div className="pt-2 text-center text-xs space-y-2 text-dark-400 border-t border-glass-border/40">
+        <p>Mitra Bisnis Baru? <Link to="/partner/register" className="text-brand-400 hover:underline">Daftar Mandiri</Link> • <Link to="/partner/status" className="text-brand-400 hover:underline">Cek Status</Link></p>
+        <p><Link to="/catalog" className="text-dark-500 hover:text-dark-300">← Kembali ke Portal Katalog</Link></p>
+      </div>
     </form>
   )
 }

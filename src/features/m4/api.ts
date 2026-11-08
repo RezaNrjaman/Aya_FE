@@ -130,3 +130,12 @@ export async function cancelOrder(id: number): Promise<void> {
   await apiClient.post(`/m4/v1/orders/${id}/cancel`)
 }
 
+export async function createOrder(data: {
+  customer_id: number
+  idempotency_key?: string
+  items: { product_id: number; quantity: number }[]
+}): Promise<Order> {
+  const res = await apiClient.post<SuccessResponse<Order>>('/m4/v1/orders', data)
+  return res.data.data
+}
+

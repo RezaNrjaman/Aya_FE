@@ -77,3 +77,16 @@ export async function changePassword(data: ChangePasswordData): Promise<void> {
   await apiClient.patch('/m1/v1/password', data)
 }
 
+export interface PermissionDefinition {
+  key: string
+  module: string
+  name: string
+  description: string
+  is_active: boolean
+}
+
+export async function fetchAvailablePermissions(): Promise<PermissionDefinition[]> {
+  const res = await apiClient.get<SuccessResponse<PermissionDefinition[]>>('/m1/v1/roles/permissions')
+  return res.data.data
+}
+

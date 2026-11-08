@@ -15,6 +15,8 @@ import { InvoicesPage } from '@/pages/invoices/InvoicesPage'
 import { OrdersPage } from '@/pages/orders/OrdersPage'
 import { CatalogPage } from '@/pages/catalog/CatalogPage'
 import { CartPage } from '@/pages/cart/CartPage'
+import { PublicPartnerRegisterPage } from '@/pages/partners/PublicPartnerRegisterPage'
+import { PublicPartnerStatusPage } from '@/pages/partners/PublicPartnerStatusPage'
 import { AuditLogsPage } from '@/pages/audit-logs/AuditLogsPage'
 import { ForbiddenPage } from '@/pages/errors/ForbiddenPage'
 import { NotFoundPage } from '@/pages/errors/NotFoundPage'
@@ -27,6 +29,8 @@ export const router = createBrowserRouter([
       { path: '/', element: <Navigate to="/catalog" replace /> },
       { path: '/catalog', element: <CatalogPage /> },
       { path: '/cart', element: <CartPage /> },
+      { path: '/partner/register', element: <PublicPartnerRegisterPage /> },
+      { path: '/partner/status', element: <PublicPartnerStatusPage /> },
     ],
   },
   /* Public: Authentication */

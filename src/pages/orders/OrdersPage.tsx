@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Eye } from 'lucide-react'
+import { Eye, Plus } from 'lucide-react'
 import { PageHeader, Button, Input, DataTable, StatusBadge, Pagination, useToast } from '@/components/ui'
-import { fetchAdminOrders, processOrder, completeOrder, cancelOrder } from '@/features/m4/api'
+import { PermissionGate } from '@/features/auth/RouteGuard'
+import { fetchAdminOrders, processOrder, completeOrder, cancelOrder, createOrder } from '@/features/m4/api'
 import type { Order } from '@/features/m4/types'
 import { OrderDetailModal } from './OrderDetailModal'
+import { OrderFormModal, type OrderItemRow } from './OrderFormModal'
 
 function formatRupiah(amount: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount)
@@ -51,25 +53,35 @@ function getOrderColumns(onDetail: (id: number) => void) {
 
 function useOrderTransitions(reload: () => void) {
   const { toast } = useToast()
-  const handleProcess = async (id: number) => { await processOrder(id); toast('success', 'Status pesanan diubah ke Diproses'); reload() }
-  const handleComplete = async (id: number) => { await completeOrder(id); toast('success', 'Pesanan berhasil diselesaikan'); reload() }
+  const handleCreate = async (d: { customer_id: number; items: OrderItemRow[] }) => {
+    await createOrder({ customer_id: d.customer_id, items: d.items, idempotency_key: 'ord_' + Date.now() })
+    toast('success', 'Pesanan manual berhasil dibuat'); reload()
+  }
+  const handleProcess = async (id: number) => { await processOrder(id); toast('success', 'Status diubah ke Diproses'); reload() }
+  const handleComplete = async (id: number) => { await completeOrder(id); toast('success', 'Pesanan diselesaikan'); reload() }
   const handleCancel = async (id: number) => { await cancelOrder(id); toast('success', 'Pesanan dibatalkan'); reload() }
-  return { handleProcess, handleComplete, handleCancel }
+  return { handleCreate, handleProcess, handleComplete, handleCancel }
 }
 
 export function OrdersPage() {
   const { orders, loading, search, setSearch, page, setPage, totalPages, loadData } = useOrders()
-  const { handleProcess, handleComplete, handleCancel } = useOrderTransitions(loadData)
+  const { handleCreate, handleProcess, handleComplete, handleCancel } = useOrderTransitions(loadData)
   const [detailId, setDetailId] = useState<number | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
   const columns = getOrderColumns(setDetailId)
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Manajemen Order Transaksi" description="Pantau status pemrosesan pesanan dan siklus hidup transaksi" />
+      <PageHeader
+        title="Manajemen Order Transaksi"
+        description="Pantau status pemrosesan pesanan dan siklus hidup transaksi"
+        actions={<PermissionGate permission="m4.orders.manage"><Button onClick={() => setFormOpen(true)}><Plus size={16} /> Buat Pesanan Manual</Button></PermissionGate>}
+      />
       <div className="max-w-xs"><Input placeholder="Cari nomor order..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} /></div>
       <DataTable columns={columns} data={orders} keyExtractor={(o) => String(o.id)} loading={loading} emptyMessage="Belum ada pesanan." />
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       <OrderDetailModal id={detailId} onClose={() => setDetailId(null)} onProcess={handleProcess} onComplete={handleComplete} onCancel={handleCancel} />
+      <OrderFormModal open={formOpen} onClose={() => setFormOpen(false)} onSubmit={handleCreate} />
     </div>
   )
 }

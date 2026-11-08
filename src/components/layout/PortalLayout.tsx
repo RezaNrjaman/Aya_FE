@@ -1,21 +1,24 @@
 /** M5-001: Customer Portal Layout — public customer-facing shell */
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { ShoppingBag, Store, Shield, ArrowRight } from 'lucide-react'
+import { ShoppingBag, Store, Shield, ArrowRight, Handshake } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useCart } from '@/features/m5/CartContext'
 
 function PortalHeaderNav() {
   const loc = useLocation()
   const { itemCount } = useCart()
-  const activeCls = 'text-brand-400 font-semibold'
-  const defCls = 'text-dark-300 hover:text-dark-100 transition-colors'
+  const a = 'text-brand-400 font-semibold'
+  const d = 'text-dark-300 hover:text-dark-100 transition-colors'
 
   return (
-    <nav className="flex items-center gap-6 text-sm">
-      <Link to="/catalog" className={`flex items-center gap-1.5 ${loc.pathname === '/catalog' ? activeCls : defCls}`}>
-        <Store size={16} /> Katalog Produk
+    <nav className="flex items-center gap-4 sm:gap-6 text-sm">
+      <Link to="/catalog" className={`flex items-center gap-1.5 ${loc.pathname === '/catalog' ? a : d}`}>
+        <Store size={16} /> Katalog
       </Link>
-      <Link to="/cart" className={`relative flex items-center gap-1.5 ${loc.pathname === '/cart' ? activeCls : defCls}`}>
+      <Link to="/partner/register" className={`hidden sm:flex items-center gap-1.5 ${loc.pathname.startsWith('/partner') ? a : d}`}>
+        <Handshake size={16} /> Gabung Mitra
+      </Link>
+      <Link to="/cart" className={`relative flex items-center gap-1.5 ${loc.pathname === '/cart' ? a : d}`}>
         <ShoppingBag size={16} /> Keranjang
         {itemCount > 0 && (
           <span className="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold bg-brand-500 text-white rounded-full">

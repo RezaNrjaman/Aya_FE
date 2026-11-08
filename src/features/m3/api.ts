@@ -48,3 +48,8 @@ export async function fetchVerifiedPartners(): Promise<Partner[]> {
   return res.data.data
 }
 
+export async function getPublicPartnerStatus(id: number): Promise<PartnerDetail> {
+  const res = await apiClient.get<SuccessResponse<PartnerDetail>>(`/m3/v1/partners/${id}/status`)
+  return res.data.data
+}
+
