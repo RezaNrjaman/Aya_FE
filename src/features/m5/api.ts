@@ -26,46 +26,46 @@ function getCartConfig() {
 }
 
 export async function fetchPublicBusinessUnits(): Promise<BusinessUnitSummary[]> {
-  const res = await apiClient.get<{ data: BusinessUnitSummary[] }>('/api/m5/v1/business-units')
+  const res = await apiClient.get<{ data: BusinessUnitSummary[] }>('/m5/v1/business-units')
   return res.data.data
 }
 
 export async function fetchPublicProducts(params?: CatalogFilterParams): Promise<ProductSummary[]> {
-  const res = await apiClient.get<{ data: ProductSummary[] }>('/api/m5/v1/products', { params })
+  const res = await apiClient.get<{ data: ProductSummary[] }>('/m5/v1/products', { params })
   return res.data.data
 }
 
 export async function fetchCart(): Promise<Cart> {
-  const res = await apiClient.get<{ data: Cart }>('/api/m5/v1/cart', getCartConfig())
+  const res = await apiClient.get<{ data: Cart }>('/m5/v1/cart', getCartConfig())
   return res.data.data
 }
 
 export async function addToCart(productId: number, quantity = 1): Promise<Cart> {
-  const res = await apiClient.post<{ data: Cart }>('/api/m5/v1/cart/items', { product_id: productId, quantity }, getCartConfig())
+  const res = await apiClient.post<{ data: Cart }>('/m5/v1/cart/items', { product_id: productId, quantity }, getCartConfig())
   return res.data.data
 }
 
 export async function updateCartItem(productId: number, quantity: number): Promise<Cart> {
-  const res = await apiClient.patch<{ data: Cart }>(`/api/m5/v1/cart/items/${productId}`, { quantity }, getCartConfig())
+  const res = await apiClient.patch<{ data: Cart }>(`/m5/v1/cart/items/${productId}`, { quantity }, getCartConfig())
   return res.data.data
 }
 
 export async function removeCartItem(productId: number): Promise<Cart> {
-  const res = await apiClient.delete<{ data: Cart }>(`/api/m5/v1/cart/items/${productId}`, getCartConfig())
+  const res = await apiClient.delete<{ data: Cart }>(`/m5/v1/cart/items/${productId}`, getCartConfig())
   return res.data.data
 }
 
 export async function clearCart(): Promise<void> {
-  await apiClient.delete('/api/m5/v1/cart', getCartConfig())
+  await apiClient.delete('/m5/v1/cart', getCartConfig())
 }
 
 export async function checkoutCart(data: CheckoutData): Promise<CheckoutResult> {
-  const res = await apiClient.post<{ data: CheckoutResult }>('/api/m5/v1/cart/checkout', data, getCartConfig())
+  const res = await apiClient.post<{ data: CheckoutResult }>('/m5/v1/cart/checkout', data, getCartConfig())
   return res.data.data
 }
 
 export async function createServiceRequest(data: CreateServiceRequestData): Promise<ServiceRequest> {
-  const res = await apiClient.post<{ data: ServiceRequest }>('/api/m5/v1/service-requests', data)
+  const res = await apiClient.post<{ data: ServiceRequest }>('/m5/v1/service-requests', data)
   return res.data.data
 }
 

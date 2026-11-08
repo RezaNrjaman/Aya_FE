@@ -5,7 +5,7 @@ import type { LoginRequest, LoginResponse, AuthUser } from './types'
 
 export async function loginApi(data: LoginRequest): Promise<LoginResponse> {
   const res = await apiClient.post<SuccessResponse<LoginResponse>>(
-    '/m1/v1/auth/login',
+    '/m1/v1/login',
     data,
   )
   return res.data.data
@@ -13,7 +13,7 @@ export async function loginApi(data: LoginRequest): Promise<LoginResponse> {
 
 export async function fetchProfile(): Promise<AuthUser> {
   const res = await apiClient.get<SuccessResponse<AuthUser>>(
-    '/m1/v1/auth/me',
+    '/m1/v1/me',
   )
   return res.data.data
 }
