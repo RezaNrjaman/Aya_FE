@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* ===== UI-001: Design Tokens — Dark Glassmorphism ===== */
+
+@theme {
+  /* Brand Colors */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  /* Neutral / Dark Base */
+  --color-dark-50: #f8fafc;
+  --color-dark-100: #f1f5f9;
+  --color-dark-200: #e2e8f0;
+  --color-dark-300: #cbd5e1;
+  --color-dark-400: #94a3b8;
+  --color-dark-500: #64748b;
+  --color-dark-600: #475569;
+  --color-dark-700: #334155;
+  --color-dark-800: #1e293b;
+  --color-dark-900: #0f172a;
+  --color-dark-950: #020617;
+
+  /* Status Colors */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Glass Surface */
+  --color-glass-bg: rgba(15, 23, 42, 0.6);
+  --color-glass-border: rgba(148, 163, 184, 0.15);
+  --color-glass-highlight: rgba(255, 255, 255, 0.05);
+
+  /* Spacing */
+  --spacing-desktop: 24px;
+  --spacing-mobile: 16px;
+
+  /* Layout */
+  --width-sidebar: 240px;
+  --height-navbar: 56px;
+  --width-content-max: 1280px;
+
+  /* Font families */
+  --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+}
+
+/* ===== Global Base ===== */
+@layer base {
+  html {
+    @apply bg-dark-950 text-dark-100 antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    @apply font-semibold tracking-tight;
+  }
+}
+
+/* ===== Glass Utilities ===== */
+@utility glass-panel {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@utility glass-card {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+}
+
+@utility glass-input {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 8px;
+}
