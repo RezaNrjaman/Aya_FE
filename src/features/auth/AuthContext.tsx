@@ -35,7 +35,8 @@ function useAuthState() {
   const login = useCallback(async (data: LoginRequest) => {
     const result = await loginApi(data)
     sessionStorage.setItem('auth_token', result.token)
-    setState({ user: result.user, token: result.token, isLoading: false, isAuthenticated: true })
+    const profile = await fetchProfile().catch(() => result.user)
+    setState({ user: profile, token: result.token, isLoading: false, isAuthenticated: true })
   }, [setState])
 
   const logout = useCallback(() => {
@@ -43,7 +44,7 @@ function useAuthState() {
     setState({ user: null, token: null, isLoading: false, isAuthenticated: false })
   }, [setState])
 
-  const hasPermission = useCallback((perm: string) => state.user?.permissions.includes(perm) ?? false, [state.user])
+  const hasPermission = useCallback((perm: string) => state.user?.permissions?.includes(perm) ?? false, [state.user])
   return { ...state, login, logout, hasPermission }
 }
 

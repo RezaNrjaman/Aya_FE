@@ -24,9 +24,26 @@ function StatusTimeline({ detail }: { detail: PartnerDetail }) {
   )
 }
 
+function VerifiedPartnerAccountBanner({ email }: { email: string }) {
+  return (
+    <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-2">
+      <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+        <span>✓ Kemitraan Anda Telah Terverifikasi & Aktif!</span>
+      </div>
+      <p className="text-dark-300">
+        Akun login Anda telah aktif. Silakan masuk menggunakan email <strong className="text-emerald-300">{email}</strong> dan kata sandi sementara <code className="px-1.5 py-0.5 bg-black/40 text-brand-300 rounded font-mono">Partner123!</code>.
+      </p>
+      <Link to="/login" className="inline-block px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium transition">
+        Masuk ke Portal Mitra →
+      </Link>
+    </div>
+  )
+}
+
 function PartnerStatusCard({ detail }: { detail: PartnerDetail }) {
   const p = detail.partner
-  const v = p.status === 'terverifikasi' ? 'success' : p.status === 'ditolak' || p.status === 'ditangguhkan' ? 'danger' : 'warning'
+  const isVerified = p.status === 'terverifikasi'
+  const v = isVerified ? 'success' : p.status === 'ditolak' || p.status === 'ditangguhkan' ? 'danger' : 'warning'
   return (
     <div className="glass-card p-6 space-y-4">
       <div className="flex items-start justify-between">
@@ -37,6 +54,7 @@ function PartnerStatusCard({ detail }: { detail: PartnerDetail }) {
         </div>
         <StatusBadge label={p.status.toUpperCase()} variant={v} />
       </div>
+      {isVerified && <VerifiedPartnerAccountBanner email={p.email} />}
       <StatusTimeline detail={detail} />
     </div>
   )
