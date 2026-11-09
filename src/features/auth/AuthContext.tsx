@@ -7,9 +7,16 @@ interface AuthContextValue extends AuthState {
   login: (data: LoginRequest) => Promise<void>
   logout: () => void
   hasPermission: (perm: string) => boolean
+  /** Re-reads role & permissions from the backend (after access changes). */
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+/** Permissions can be changed by an administrator at any time; re-check periodically. */
+const PROFILE_REFRESH_MS = 60_000
+
+const SIGNED_OUT: AuthState = { user: null, token: null, isLoading: false, isAuthenticated: false }
 
 function useProfileLoader(token: string | null) {
   const [state, setState] = useState<AuthState>({
@@ -22,11 +29,22 @@ function useProfileLoader(token: string | null) {
       .then((user) => setState((s) => ({ ...s, user, isAuthenticated: true, isLoading: false })))
       .catch(() => {
         sessionStorage.removeItem('auth_token')
-        setState({ user: null, token: null, isLoading: false, isAuthenticated: false })
+        setState(SIGNED_OUT)
       })
   }, [token])
 
   return { state, setState }
+}
+
+/** Keeps permissions in sync with the backend while the session is open. */
+function useProfileSync(isAuthenticated: boolean, refresh: () => Promise<void>) {
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const onFocus = () => { void refresh() }
+    window.addEventListener('focus', onFocus)
+    const timer = window.setInterval(onFocus, PROFILE_REFRESH_MS)
+    return () => { window.removeEventListener('focus', onFocus); window.clearInterval(timer) }
+  }, [isAuthenticated, refresh])
 }
 
 function useAuthState() {
@@ -41,11 +59,22 @@ function useAuthState() {
 
   const logout = useCallback(() => {
     sessionStorage.removeItem('auth_token')
-    setState({ user: null, token: null, isLoading: false, isAuthenticated: false })
+    setState(SIGNED_OUT)
   }, [setState])
 
+  const refreshProfile = useCallback(async () => {
+    if (!sessionStorage.getItem('auth_token')) return
+    try {
+      const user = await fetchProfile()
+      setState((s) => ({ ...s, user, isAuthenticated: true }))
+    } catch {
+      // 401 = account deactivated or session invalid; other errors keep the session.
+    }
+  }, [setState])
+
+  useProfileSync(state.isAuthenticated, refreshProfile)
   const hasPermission = useCallback((perm: string) => state.user?.permissions?.includes(perm) ?? false, [state.user])
-  return { ...state, login, logout, hasPermission }
+  return { ...state, login, logout, hasPermission, refreshProfile }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

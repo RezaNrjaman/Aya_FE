@@ -1,19 +1,15 @@
 /** UI-005: Auth types — user, session, permission */
 
 export interface AuthUser {
-  id: string
+  id: number
   email: string
   name: string
-  is_active: boolean
-  roles: UserRole[]
+  role: string
+  division?: string
+  unit_usaha_id?: number
+  /** Present when the account belongs to a partner organisation. */
+  partner_id?: number
   permissions: string[]
-}
-
-export interface UserRole {
-  role_id: string
-  role_name: string
-  scope_type?: string
-  scope_id?: string
 }
 
 export interface LoginRequest {
@@ -32,4 +28,3 @@ export interface AuthState {
   isLoading: boolean
   isAuthenticated: boolean
 }
-

@@ -4,6 +4,7 @@ export type PartnerStatus = 'pending' | 'terverifikasi' | 'ditolak' | 'ditangguh
 
 export interface Partner {
   id: number
+  user_id?: number
   company_name: string
   contact_person: string
   email: string
@@ -24,7 +25,7 @@ export interface StatusHistory {
   from_status: string
   to_status: string
   reason?: string
-  created_by: string
+  changed_by?: string
   created_at: string
 }
 

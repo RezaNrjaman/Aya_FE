@@ -38,7 +38,7 @@ function DemoAccountButtons({ onSelect }: { onSelect: (e: string, p: string) => 
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => onSelect('admin@araya.com', 'Admin1234!')}
+          onClick={() => onSelect('admin@araya.com', 'Admin123!')}
           className="px-2 py-1 bg-brand-500/20 text-brand-300 hover:bg-brand-500/30 rounded"
         >
           Super Admin

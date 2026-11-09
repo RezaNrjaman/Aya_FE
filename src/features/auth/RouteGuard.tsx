@@ -2,6 +2,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthContext'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
+import { ForbiddenPage } from '@/pages/errors/ForbiddenPage'
 
 /** Redirects to /login if not authenticated */
 export function PrivateRoute() {
@@ -30,3 +31,14 @@ export function PermissionGate({
   return <>{children}</>
 }
 
+
+/**
+ * Route-level guard: shows the Forbidden page when the user lacks the
+ * permission (e.g. opening /roles directly by URL). The backend still enforces
+ * every API call; this only avoids rendering screens that cannot work.
+ */
+export function RequirePermission({ permission, children }: { permission: string; children: React.ReactNode }) {
+  const { hasPermission } = useAuth()
+  if (!hasPermission(permission)) return <ForbiddenPage />
+  return <>{children}</>
+}

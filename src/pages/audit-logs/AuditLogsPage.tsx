@@ -38,12 +38,12 @@ function getBaseColumns() {
         <span className="text-xs text-dark-300 font-mono">{new Date(l.created_at).toLocaleString('id-ID')}</span>
       ),
     },
-    { key: 'actor', header: 'Aktor', render: (l: AuditLog) => <span className="text-xs font-medium text-dark-200">{l.actor}</span> },
+    { key: 'actor', header: 'Aktor', render: (l: AuditLog) => <span className="text-xs font-medium text-dark-200">{l.user_name || 'Sistem'}</span> },
     { key: 'action', header: 'Aksi', render: (l: AuditLog) => <StatusBadge label={l.action} variant="info" /> },
     {
       key: 'target',
       header: 'Target Objek',
-      render: (l: AuditLog) => <span className="text-xs text-dark-400 font-mono">{l.object_type} #{l.object_id}</span>,
+      render: (l: AuditLog) => <span className="text-xs text-dark-400 font-mono">{l.entity_type} #{l.entity_id || '—'}</span>,
     },
   ]
 }

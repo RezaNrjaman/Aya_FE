@@ -11,7 +11,7 @@ function useAvailablePermissions(role: Role | null) {
     if (!role) return
     setLoading(true)
     fetchAvailablePermissions()
-      .then((data) => setList(data.filter((p) => !role.permissions?.includes(p.key))))
+      .then((data) => setList(data.filter((p) => !role.permissions?.some((rp) => rp.key === p.key))))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [role])

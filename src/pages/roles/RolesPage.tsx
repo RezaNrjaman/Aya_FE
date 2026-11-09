@@ -1,47 +1,84 @@
+/** M1-005/006/007: Role management & permission configuration */
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, ShieldCheck, X } from 'lucide-react'
-import { PageHeader, Button, StatusBadge, useToast } from '@/components/ui'
+import { ChevronDown, ChevronUp, Info, Lock, Pencil, Plus, Power, SlidersHorizontal } from 'lucide-react'
+import { PageHeader, Button, StatusBadge, ConfirmDialog, useToast } from '@/components/ui'
 import { PermissionGate } from '@/features/auth/RouteGuard'
-import {
-  fetchRoles,
-  createRole,
-  assignRolePermission,
-  revokeRolePermission,
-} from '@/features/m1/api'
-import type { Role, CreateRoleData } from '@/features/m1/types'
-import { RoleFormModal } from './RoleFormModal'
-import { AddPermissionModal } from './AddPermissionModal'
+import { useAuth } from '@/features/auth/AuthContext'
+import { fetchRoles, createRole, updateRole, setRolePermissions, fetchAvailablePermissions, type PermissionDefinition } from '@/features/m1/api'
+import { PERM_ROLES_MANAGE, PROTECTED_ROLE, errorMessage, moduleLabel } from '@/features/m1/access'
+import type { Role } from '@/features/m1/types'
+import { RoleFormModal, type RoleFormSubmit } from './RoleFormModal'
+import { PermissionMatrixModal } from './PermissionMatrixModal'
 
-function useRoles() {
+function useRolesData() {
   const { toast } = useToast()
   const [roles, setRoles] = useState<Role[]>([])
-  const [loading, setLoading] = useState(false)
-
+  const [catalog, setCatalog] = useState<PermissionDefinition[]>([])
+  const [loading, setLoading] = useState(true)
   const loadData = useCallback(async () => {
-    setLoading(true)
     try {
-      const data = await fetchRoles()
-      setRoles(data)
-    } catch {
-      toast('error', 'Gagal memuat data role')
+      const [r, c] = await Promise.all([fetchRoles(), fetchAvailablePermissions()])
+      setRoles(r); setCatalog(c.filter((p) => p.is_active))
+    } catch (e) {
+      toast('error', errorMessage(e, 'Gagal memuat data role'))
     } finally {
       setLoading(false)
     }
   }, [toast])
-
-  useEffect(() => { loadData() }, [loadData])
-  return { roles, loading, loadData }
+  useEffect(() => { void loadData() }, [loadData])
+  return { roles, catalog, loading, loadData }
 }
 
-function RoleCardHeader({ role }: { role: Role }) {
+function moduleSummary(role: Role, catalog: PermissionDefinition[]) {
+  const modules = [...new Set(catalog.map((p) => p.module))].sort()
+  const owned = new Set((role.permissions ?? []).map((p) => p.key))
+  return modules.map((m) => {
+    const keys = catalog.filter((p) => p.module === m).map((p) => p.key)
+    return { module: m, total: keys.length, granted: keys.filter((k) => owned.has(k)).length }
+  })
+}
+
+function ModuleChips({ role, catalog }: { role: Role; catalog: PermissionDefinition[] }) {
   return (
-    <div className="flex items-start justify-between">
-      <div>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-wrap gap-1.5">
+      {moduleSummary(role, catalog).map(({ module, total, granted }) => (
+        <span key={module} title={moduleLabel(module)}
+          className={`text-[11px] px-2 py-0.5 rounded border font-medium ${granted === 0 ? 'border-glass-border text-dark-500' : granted === total ? 'border-success/30 bg-success/10 text-success' : 'border-brand-500/30 bg-brand-500/10 text-brand-300'}`}>
+          {module.toUpperCase()} {granted}/{total}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function PermissionList({ role }: { role: Role }) {
+  const perms = role.permissions ?? []
+  if (perms.length === 0) return <p className="text-xs text-dark-500 italic">Belum ada hak akses. Pengguna dengan role ini tidak dapat membuka menu apa pun.</p>
+  const byModule = new Map<string, typeof perms>()
+  perms.forEach((p) => byModule.set(p.module, [...(byModule.get(p.module) ?? []), p]))
+  return (
+    <div className="space-y-2">
+      {[...byModule.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([m, list]) => (
+        <div key={m}>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-dark-500">{moduleLabel(m)}</p>
+          <ul className="mt-1 flex flex-wrap gap-1">
+            {list.map((p) => <li key={p.key} title={p.key} className="text-xs text-dark-300 bg-white/5 border border-glass-border rounded px-2 py-0.5">{p.name || p.key}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RoleCardHeader({ role, isOwn }: { role: Role; isOwn: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-heading text-base font-semibold text-dark-100">{role.display_name}</h3>
-          <span className="text-xs text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 font-mono">
-            {role.name}
-          </span>
+          <span className="text-xs text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 font-mono">{role.name}</span>
+          {role.name === PROTECTED_ROLE && <span className="text-[11px] text-warning flex items-center gap-1"><Lock size={11} /> Role sistem</span>}
+          {isOwn && <span className="text-[11px] text-dark-400">· role Anda</span>}
         </div>
         {role.description && <p className="text-xs text-dark-400 mt-1">{role.description}</p>}
       </div>
@@ -50,93 +87,99 @@ function RoleCardHeader({ role }: { role: Role }) {
   )
 }
 
-function RolePermissionPill({ perm, onRevoke }: { perm: string; onRevoke: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-white/5 border border-white/10 text-dark-300 font-mono">
-      <ShieldCheck size={12} className="text-brand-400" />
-      {perm}
-      <PermissionGate permission="m1.roles.manage">
-        <button onClick={onRevoke} className="text-dark-500 hover:text-danger ml-0.5" title="Cabut">
-          <X size={12} />
-        </button>
-      </PermissionGate>
-    </span>
-  )
-}
+interface CardActions { onMatrix: () => void; onEdit: () => void; onToggle: () => void }
 
-function RoleCard({ role, onAdd, onRevoke }: { role: Role; onAdd: () => void; onRevoke: (k: string) => void }) {
+function RoleCardActions({ role, isOwn, a }: { role: Role; isOwn: boolean; a: CardActions }) {
+  const canToggle = role.name !== PROTECTED_ROLE && !(isOwn && role.is_active)
   return (
-    <div className="glass-card p-5 space-y-4">
-      <RoleCardHeader role={role} />
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-dark-400">Hak Akses ({role.permissions?.length ?? 0})</p>
-          <PermissionGate permission="m1.roles.manage">
-            <button onClick={onAdd} className="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1">
-              <Plus size={12} /> Tambah
-            </button>
-          </PermissionGate>
-        </div>
-        <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-          {(!role.permissions || role.permissions.length === 0) && <span className="text-xs text-dark-500 italic">Belum ada permission.</span>}
-          {role.permissions?.map((p) => <RolePermissionPill key={p} perm={p} onRevoke={() => onRevoke(p)} />)}
-        </div>
+    <PermissionGate permission={PERM_ROLES_MANAGE}>
+      <div className="flex flex-wrap gap-2 pt-3 border-t border-glass-border">
+        <Button size="sm" onClick={a.onMatrix}><SlidersHorizontal size={14} /> Atur Hak Akses</Button>
+        <Button size="sm" variant="secondary" onClick={a.onEdit}><Pencil size={14} /> Ubah</Button>
+        {canToggle && (
+          <Button size="sm" variant={role.is_active ? 'danger' : 'secondary'} onClick={a.onToggle}>
+            <Power size={14} /> {role.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+          </Button>
+        )}
       </div>
-    </div>
+    </PermissionGate>
   )
 }
 
-function useRoleActions(reload: () => void) {
-  const { toast } = useToast()
-  const handleCreate = async (data: CreateRoleData) => {
-    await createRole(data)
-    toast('success', 'Role berhasil dibuat')
-    reload()
-  }
-  const handleAssign = async (roleName: string, key: string) => {
-    await assignRolePermission(roleName, key)
-    toast('success', 'Permission berhasil dipetakan')
-    reload()
-  }
-  const handleRevoke = async (roleName: string, key: string) => {
-    try {
-      await revokeRolePermission(roleName, key)
-      toast('success', 'Permission berhasil dicabut')
-      reload()
-    } catch {
-      toast('error', 'Gagal mencabut permission')
-    }
-  }
-  return { handleCreate, handleAssign, handleRevoke }
-}
-
-function RoleGrid({ roles, onAdd, onRevoke }: { roles: Role[]; onAdd: (r: Role) => void; onRevoke: (name: string, key: string) => void }) {
+function RoleCard({ role, catalog, a }: { role: Role; catalog: PermissionDefinition[]; a: CardActions }) {
+  const { user } = useAuth()
+  const [open, setOpen] = useState(false)
+  const isOwn = user?.role === role.name
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {roles.map((r) => (
-        <RoleCard key={r.name} role={r} onAdd={() => onAdd(r)} onRevoke={(k) => onRevoke(r.name, k)} />
-      ))}
+    <div className={`glass-card p-5 space-y-3 ${role.is_active ? '' : 'opacity-75'}`}>
+      <RoleCardHeader role={role} isOwn={isOwn} />
+      <ModuleChips role={role} catalog={catalog} />
+      <button onClick={() => setOpen(!open)} aria-expanded={open} className="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1">
+        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />} {role.permissions?.length ?? 0} hak akses
+      </button>
+      {open && <PermissionList role={role} />}
+      <RoleCardActions role={role} isOwn={isOwn} a={a} />
     </div>
   )
+}
+
+function useRoleActions(reload: () => Promise<void>) {
+  const { toast } = useToast()
+  const { refreshProfile } = useAuth()
+  const afterChange = async (msg: string) => { toast('success', msg); await Promise.all([reload(), refreshProfile()]) }
+  const submitForm = async (d: RoleFormSubmit) => {
+    if (d.create) { await createRole(d.create); return afterChange('Role berhasil dibuat') }
+    if (d.update) { await updateRole(d.update.name, d.update.data); return afterChange('Role berhasil diperbarui') }
+  }
+  const saveMatrix = async (name: string, keys: string[]) => {
+    await setRolePermissions(name, keys)
+    await afterChange('Hak akses role berhasil disimpan dan langsung berlaku')
+  }
+  const toggleActive = async (role: Role) => {
+    try { await updateRole(role.name, { is_active: !role.is_active }); await afterChange(role.is_active ? 'Role dinonaktifkan' : 'Role diaktifkan') }
+    catch (e) { toast('error', errorMessage(e, 'Gagal mengubah status role')) }
+  }
+  return { submitForm, saveMatrix, toggleActive }
+}
+
+function AccessInfo() {
+  return (
+    <div className="glass-card p-3 flex gap-2 text-xs text-dark-300">
+      <Info size={16} className="text-brand-400 shrink-0" />
+      <p>Perubahan hak akses berlaku langsung untuk semua pengguna dengan role tersebut, tanpa perlu login ulang. Role nonaktif tidak memberi hak akses apa pun dan tidak bisa ditetapkan ke pengguna.</p>
+    </div>
+  )
+}
+
+function useRoleDialogs() {
+  const [form, setForm] = useState<{ open: boolean; role: Role | null }>({ open: false, role: null })
+  const [matrixRole, setMatrixRole] = useState<Role | null>(null)
+  const [toggleRole, setToggleRole] = useState<Role | null>(null)
+  return { form, setForm, matrixRole, setMatrixRole, toggleRole, setToggleRole }
 }
 
 export function RolesPage() {
-  const { roles, loading, loadData } = useRoles()
-  const { handleCreate, handleAssign, handleRevoke } = useRoleActions(loadData)
-  const [formOpen, setFormOpen] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const { roles, catalog, loading, loadData } = useRolesData()
+  const actions = useRoleActions(loadData)
+  const d = useRoleDialogs()
+  const cardActions = (r: Role): CardActions => ({ onMatrix: () => d.setMatrixRole(r), onEdit: () => d.setForm({ open: true, role: r }), onToggle: () => d.setToggleRole(r) })
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Manajemen Role & Hak Akses"
-        description="Konfigurasi dynamic role dan hak akses fitur sistem"
-        actions={<PermissionGate permission="m1.roles.manage"><Button onClick={() => setFormOpen(true)}><Plus size={16} /> Buat Role Baru</Button></PermissionGate>}
-      />
+      <PageHeader title="Manajemen Role & Hak Akses" description="Atur role dan hak akses setiap fitur aplikasi"
+        actions={<PermissionGate permission={PERM_ROLES_MANAGE}><Button onClick={() => d.setForm({ open: true, role: null })}><Plus size={16} /> Buat Role Baru</Button></PermissionGate>} />
+      <AccessInfo />
       {loading && <div className="text-center py-8 text-dark-400">Memuat role...</div>}
-      <RoleGrid roles={roles} onAdd={setSelectedRole} onRevoke={handleRevoke} />
-      <RoleFormModal open={formOpen} onClose={() => setFormOpen(false)} onSubmit={handleCreate} />
-      <AddPermissionModal role={selectedRole} onClose={() => setSelectedRole(null)} onSubmit={handleAssign} />
+      {!loading && roles.length === 0 && <div className="text-center py-8 text-dark-400">Belum ada role.</div>}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {roles.map((r) => <RoleCard key={r.name} role={r} catalog={catalog} a={cardActions(r)} />)}
+      </div>
+      {d.form.open && <RoleFormModal open role={d.form.role} roles={roles} onClose={() => d.setForm({ open: false, role: null })} onSubmit={actions.submitForm} />}
+      {d.matrixRole && <PermissionMatrixModal role={d.matrixRole} onClose={() => d.setMatrixRole(null)} onSave={actions.saveMatrix} />}
+      <ConfirmDialog open={d.toggleRole !== null} title={d.toggleRole?.is_active ? 'Nonaktifkan Role' : 'Aktifkan Role'}
+        message={d.toggleRole?.is_active ? `Pengguna dengan role "${d.toggleRole?.display_name}" akan langsung kehilangan seluruh hak aksesnya. Lanjutkan?` : `Hak akses role "${d.toggleRole?.display_name}" akan kembali berlaku. Lanjutkan?`}
+        confirmLabel={d.toggleRole?.is_active ? 'Nonaktifkan' : 'Aktifkan'} confirmVariant={d.toggleRole?.is_active ? 'danger' : 'primary'}
+        onConfirm={async () => { if (d.toggleRole) await actions.toggleActive(d.toggleRole); d.setToggleRole(null) }} onCancel={() => d.setToggleRole(null)} />
     </div>
   )
 }

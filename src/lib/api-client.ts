@@ -18,3 +18,23 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+
+/**
+ * A 401 on an authenticated request means the session is no longer valid
+ * (token expired, account deactivated). Clear it and send the user to login.
+ */
+apiClient.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const status = error?.response?.status
+    const hadToken = Boolean(error?.config?.headers?.Authorization)
+    const isLogin = String(error?.config?.url ?? '').includes('/login')
+    if (status === 401 && hadToken && !isLogin && sessionStorage.getItem('auth_token')) {
+      sessionStorage.removeItem('auth_token')
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login?expired=1')
+      }
+    }
+    return Promise.reject(error)
+  },
+)

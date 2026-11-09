@@ -5,9 +5,9 @@ function AuditGridInfo({ log }: { log: AuditLog }) {
   return (
     <div className="grid grid-cols-2 gap-2 text-xs text-dark-300">
       <div><span className="text-dark-500">Waktu:</span> {new Date(log.created_at).toLocaleString('id-ID')}</div>
-      <div><span className="text-dark-500">Aktor:</span> {log.actor}</div>
+      <div><span className="text-dark-500">Aktor:</span> {log.user_name || 'Sistem'}</div>
       <div><span className="text-dark-500">Aksi:</span> <strong className="text-brand-400">{log.action}</strong></div>
-      <div><span className="text-dark-500">Objek:</span> {log.object_type} #{log.object_id}</div>
+      <div><span className="text-dark-500">Objek:</span> {log.entity_type} #{log.entity_id || '—'}</div>
       <div className="col-span-2"><span className="text-dark-500">IP Address:</span> {log.ip_address || '—'}</div>
     </div>
   )

@@ -28,7 +28,7 @@ function StatusHistoryList({ histories }: { histories: StatusHistory[] }) {
             <span className="font-mono">{new Date(h.created_at).toLocaleString('id-ID')}</span>
           </div>
           {h.reason && <p className="text-dark-300 italic">"{h.reason}"</p>}
-          <p className="text-dark-500">Oleh: {h.created_by}</p>
+          <p className="text-dark-500">Oleh: {h.changed_by || '—'}</p>
         </div>
       ))}
     </div>

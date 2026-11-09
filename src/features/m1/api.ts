@@ -8,6 +8,7 @@ import type {
   AssignRoleData,
   Role,
   CreateRoleData,
+  UpdateRoleData,
   AuditLog,
   ChangePasswordData,
 } from './types'
@@ -19,7 +20,7 @@ export async function fetchUsers(params?: {
   division?: string
 }): Promise<ListResponse<User>> {
   const res = await apiClient.get<ListResponse<User>>('/m1/v1/users', { params })
-  return res.data
+  return { ...res.data, data: res.data.data ?? [] }
 }
 
 export async function createUser(data: CreateUserData): Promise<User> {
@@ -42,11 +43,24 @@ export async function assignUserRole(id: number, data: AssignRoleData): Promise<
 
 export async function fetchRoles(): Promise<Role[]> {
   const res = await apiClient.get<SuccessResponse<Role[]>>('/m1/v1/roles')
-  return res.data.data
+  return res.data.data ?? []
 }
 
 export async function createRole(data: CreateRoleData): Promise<void> {
   await apiClient.post('/m1/v1/roles', data)
+}
+
+export async function updateRole(roleName: string, data: UpdateRoleData): Promise<void> {
+  await apiClient.patch(`/m1/v1/roles/${encodeURIComponent(roleName)}`, data)
+}
+
+/** Replaces the full permission set of a role (permission matrix save). */
+export async function setRolePermissions(roleName: string, permissionKeys: string[]): Promise<Role> {
+  const res = await apiClient.put<SuccessResponse<Role>>(
+    `/m1/v1/roles/${encodeURIComponent(roleName)}/permissions`,
+    { permission_keys: permissionKeys },
+  )
+  return res.data.data
 }
 
 export async function assignRolePermission(
@@ -87,6 +101,6 @@ export interface PermissionDefinition {
 
 export async function fetchAvailablePermissions(): Promise<PermissionDefinition[]> {
   const res = await apiClient.get<SuccessResponse<PermissionDefinition[]>>('/m1/v1/roles/permissions')
-  return res.data.data
+  return res.data.data ?? []
 }
 
