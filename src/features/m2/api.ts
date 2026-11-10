@@ -6,6 +6,9 @@ import type {
   CreateUnitData,
   UpdateUnitData,
   DashboardSummary,
+  Division,
+  CreateDivisionData,
+  UpdateDivisionData,
 } from './types'
 
 export async function fetchAdminUnits(params?: {
@@ -66,5 +69,48 @@ export async function fetchDashboardSummary(params?: {
     { params },
   )
   return res.data.data
+}
+
+/** ARY-006: partner-owned division CRUD */
+export async function fetchDivisions(params?: {
+  page?: number
+  per_page?: number
+  search?: string
+}): Promise<ListResponse<Division>> {
+  const res = await apiClient.get<ListResponse<Division>>('/m2/v1/divisions', {
+    params,
+  })
+  return res.data
+}
+
+export async function createDivision(data: CreateDivisionData): Promise<Division> {
+  const res = await apiClient.post<SuccessResponse<Division>>(
+    '/m2/v1/divisions',
+    data,
+  )
+  return res.data.data
+}
+
+export async function updateDivision(
+  id: number,
+  data: UpdateDivisionData,
+): Promise<Division> {
+  const res = await apiClient.patch<SuccessResponse<Division>>(
+    `/m2/v1/divisions/${id}`,
+    data,
+  )
+  return res.data.data
+}
+
+export async function deactivateDivision(id: number): Promise<void> {
+  await apiClient.post(`/m2/v1/divisions/${id}/deactivate`)
+}
+
+export async function activateDivision(id: number): Promise<void> {
+  await apiClient.post(`/m2/v1/divisions/${id}/activate`)
+}
+
+export async function deleteDivision(id: number): Promise<void> {
+  await apiClient.delete(`/m2/v1/divisions/${id}`)
 }
 

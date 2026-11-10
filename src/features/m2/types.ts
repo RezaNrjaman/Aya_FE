@@ -37,6 +37,25 @@ export interface UpdateUnitData {
   address?: string
 }
 
+export interface Division {
+  id: number
+  name: string
+  description?: string
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CreateDivisionData {
+  name: string
+  description?: string
+}
+
+export interface UpdateDivisionData {
+  name?: string
+  description?: string
+}
+
 export interface DashboardMetrics {
   total_revenue: number
   total_orders: number

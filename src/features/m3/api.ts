@@ -4,6 +4,8 @@ import type { SuccessResponse, ListResponse } from '@/lib/api-types'
 import type {
   Partner,
   PartnerDetail,
+  PublicPartnerStatus,
+  ActivateAccountData,
   RegisterPartnerData,
 } from './types'
 
@@ -48,8 +50,19 @@ export async function fetchVerifiedPartners(): Promise<Partner[]> {
   return res.data.data
 }
 
-export async function getPublicPartnerStatus(id: number): Promise<PartnerDetail> {
-  const res = await apiClient.get<SuccessResponse<PartnerDetail>>(`/m3/v1/partners/${id}/status`)
+/**
+ * Public status check by unguessable registration code (ARY-002).
+ * The old `GET /partners/:id/status` sequential-ID endpoint was removed.
+ */
+export async function getPublicPartnerStatus(code: string): Promise<PublicPartnerStatus> {
+  const res = await apiClient.get<SuccessResponse<PublicPartnerStatus>>('/m3/v1/partners/status', {
+    params: { code },
+  })
   return res.data.data
+}
+
+/** Consume the single-use activation invitation and set the first password. */
+export async function activateAccount(data: ActivateAccountData): Promise<void> {
+  await apiClient.post('/m1/v1/auth/activate', data)
 }
 

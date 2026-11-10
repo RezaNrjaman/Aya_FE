@@ -8,6 +8,7 @@ import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { UsersPage } from '@/pages/users/UsersPage'
 import { RolesPage } from '@/pages/roles/RolesPage'
 import { BusinessUnitsPage } from '@/pages/business-units/BusinessUnitsPage'
+import { DivisionsPage } from '@/pages/divisions/DivisionsPage'
 import { PartnersPage } from '@/pages/partners/PartnersPage'
 import { ProductsPage } from '@/pages/products/ProductsPage'
 import { CustomersPage } from '@/pages/customers/CustomersPage'
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
           { path: '/roles', element: guard('m1.roles.read', <RolesPage />) },
           /* M2 */
           { path: '/business-units', element: guard('m2.business_units.read', <BusinessUnitsPage />) },
+          { path: '/divisions', element: guard('m2.divisions.read', <DivisionsPage />) },
           /* M3 */
           { path: '/partners', element: guard('m3.partners.read', <PartnersPage />) },
           /* M4 */

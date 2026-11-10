@@ -5,10 +5,10 @@ import { Button, Input, Textarea } from '@/components/ui'
 import { registerPartner } from '@/features/m3/api'
 import type { RegisterPartnerData, Partner } from '@/features/m3/types'
 
-function SuccessActions({ id }: { id: number }) {
+function SuccessActions({ code }: { code: string }) {
   return (
     <div className="pt-2 flex justify-center gap-3">
-      <Link to={`/partner/status?id=${id}`}><Button><Building2 size={16} /> Cek Status Verifikasi</Button></Link>
+      <Link to={`/partner/status?code=${code}`}><Button><Building2 size={16} /> Cek Status Verifikasi</Button></Link>
       <Link to="/catalog"><Button variant="secondary">Kembali ke Katalog <ArrowRight size={16} /></Button></Link>
     </div>
   )
@@ -22,14 +22,22 @@ function RegisterSuccessCard({ partner }: { partner: Partner }) {
       </div>
       <h2 className="font-heading text-xl font-bold text-dark-100">Pendaftaran Berhasil Dikirim!</h2>
       <p className="text-sm text-dark-300">
-        Terima kasih <strong>{partner.company_name}</strong>. Pendaftaran mitra Anda tercatat dengan ID:{' '}
-        <span className="font-mono font-bold text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded">#{partner.id}</span>
+        Terima kasih <strong>{partner.company_name}</strong>. Pendaftaran mitra Anda telah tercatat.
       </p>
+      <div className="p-3 bg-brand-500/10 border border-brand-500/30 rounded-lg text-left space-y-1">
+        <p className="text-xs font-semibold text-brand-300">Kode Pelacakan Pendaftaran Anda</p>
+        <p className="font-mono font-bold text-brand-200 text-sm break-all">{partner.registration_code}</p>
+        <p className="text-[11px] text-dark-400">
+          Simpan kode ini baik-baik. Kode ini dibutuhkan untuk memantau status verifikasi dan mengaktivasi akun Anda —
+          kami tidak menampilkan kata sandi awal apa pun.
+        </p>
+      </div>
       <div className="p-3 bg-white/5 border border-glass-border rounded-lg text-xs text-dark-400 text-left space-y-1">
         <p>• Status saat ini: <strong className="text-warning">PENDING (Menunggu Verifikasi)</strong></p>
         <p>• Administrator Super Admin Araya akan meninjau profil kemitraan Anda.</p>
+        <p>• Setelah disetujui, Anda akan mengatur kata sandi sendiri melalui tautan aktivasi.</p>
       </div>
-      <SuccessActions id={partner.id} />
+      <SuccessActions code={partner.registration_code || ''} />
     </div>
   )
 }
@@ -86,7 +94,7 @@ function RegisterFormCard({
 
 export function PublicPartnerRegisterPage() {
   const state = usePartnerRegister()
-  if (state.result) return <RegisterSuccessCard partner={state.result} />
+  if (state.result && state.result.registration_code) return <RegisterSuccessCard partner={state.result} />
 
   return (
     <div className="max-w-xl mx-auto py-4 space-y-6">

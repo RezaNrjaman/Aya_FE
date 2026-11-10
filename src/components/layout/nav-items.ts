@@ -2,6 +2,7 @@
 import {
   LayoutDashboard,
   Building2,
+  Network,
   Users,
   Handshake,
   ShoppingCart,
@@ -38,6 +39,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: 'Manajemen',
     items: [
       { label: 'Unit Usaha', path: '/business-units', icon: Building2, permission: 'm2.business_units.read' },
+      { label: 'Divisi', path: '/divisions', icon: Network, permission: 'm2.divisions.read' },
       { label: 'Partner', path: '/partners', icon: Handshake, permission: 'm3.partners.read' },
       { label: 'Pengguna', path: '/users', icon: Users, permission: 'm1.users.read' },
       { label: 'Roles', path: '/roles', icon: Shield, permission: 'm1.roles.read' },
