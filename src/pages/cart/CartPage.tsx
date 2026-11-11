@@ -137,6 +137,9 @@ export function CartPage() {
   const { cart, updateItem, removeItem, clearAll, refreshCart } = useCart()
   const { checkingOut, result, setResult, handleCheckout } = useCheckoutHandler(refreshCart)
   const cartItems = Array.isArray(cart?.items) ? cart.items : []
+  // Keep aggregate values safe even when the cart has not loaded or the API returns null.
+  const cartTotalAmount = cart?.total_amount ?? 0
+  const cartTotalItems = cart?.total_items ?? cartItems.reduce((sum, item) => sum + item.quantity, 0)
   // Cart can be null while the guest cart is loading or when no session exists.
   // Return the empty state before accessing aggregate fields on the cart object.
   if (!cart || cartItems.length === 0) {
@@ -156,7 +159,7 @@ export function CartPage() {
         <div className="lg:col-span-2 space-y-3">
           {cartItems.map((it) => <CartItemRow key={it.id || it.product_id} it={it} onUpdate={updateItem} onRemove={removeItem} />)}
         </div>
-        <div><CheckoutCard totalAmount={cart.total_amount} totalItems={cart.total_items} onCheckout={handleCheckout} loading={checkingOut} /></div>
+        <div><CheckoutCard totalAmount={cartTotalAmount} totalItems={cartTotalItems} onCheckout={handleCheckout} loading={checkingOut} /></div>
       </div>
       {result && <CheckoutSuccessModal result={result} onClose={() => { setResult(null); nav('/catalog') }} onTrack={() => nav(`/track-order?order_no=${encodeURIComponent(result.order_no)}&email=${encodeURIComponent(sessionStorage.getItem('araya_last_customer_email') || '')}`)} />}
     </div>
