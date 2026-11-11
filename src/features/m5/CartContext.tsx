@@ -40,11 +40,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(false)
   const refreshCart = useCallback(async () => {
-    try { setCart(await fetchCart()) } catch { setCart(null) }
+    try {
+      const next = await fetchCart()
+      setCart({ ...next, items: Array.isArray(next?.items) ? next.items : [], total_amount: next?.total_amount ?? 0, total_items: next?.total_items ?? 0 })
+    } catch { setCart(null) }
   }, [])
   useEffect(() => { refreshCart() }, [refreshCart])
   const mutations = useCartMutations(setCart, setLoading, refreshCart)
-  const itemCount = cart?.items?.reduce((sum, it) => sum + it.quantity, 0) ?? 0
+  const itemCount = (Array.isArray(cart?.items) ? cart.items : []).reduce((sum, it) => sum + it.quantity, 0)
 
   return (
     <CartContext.Provider value={{ cart, itemCount, loading, refreshCart, ...mutations }}>

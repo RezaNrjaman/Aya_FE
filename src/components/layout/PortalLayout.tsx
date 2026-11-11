@@ -1,6 +1,6 @@
 /** M5-001: Customer Portal Layout — public customer-facing shell */
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { ShoppingBag, Store, Shield, ArrowRight, Handshake } from 'lucide-react'
+import { ShoppingBag, Store, Shield, ArrowRight, Handshake, PackageCheck } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useCart } from '@/features/m5/CartContext'
 
@@ -17,6 +17,9 @@ function PortalHeaderNav() {
       </Link>
       <Link to="/partner/register" className={`hidden sm:flex items-center gap-1.5 ${loc.pathname.startsWith('/partner') ? a : d}`}>
         <Handshake size={16} /> Gabung Mitra
+      </Link>
+      <Link to="/track-order" className={`hidden sm:flex items-center gap-1.5 ${loc.pathname === '/track-order' ? a : d}`}>
+        <PackageCheck size={16} /> Lacak Pesanan
       </Link>
       <Link to="/cart" className={`relative flex items-center gap-1.5 ${loc.pathname === '/cart' ? a : d}`}>
         <ShoppingBag size={16} /> Keranjang

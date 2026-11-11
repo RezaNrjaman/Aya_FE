@@ -16,7 +16,7 @@ export async function fetchAdminProducts(params?: {
   search?: string
 }): Promise<ListResponse<Product>> {
   const res = await apiClient.get<ListResponse<Product>>('/m4/v1/admin/products', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function createProduct(data: CreateProductData): Promise<Product> {
@@ -35,7 +35,7 @@ export async function fetchCustomers(params?: {
   search?: string
 }): Promise<ListResponse<Customer>> {
   const res = await apiClient.get<ListResponse<Customer>>('/m4/v1/customers', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function createCustomer(data: { name: string; email: string; phone?: string; address?: string }): Promise<Customer> {
@@ -49,7 +49,7 @@ export async function fetchQuotations(params?: {
   search?: string
 }): Promise<ListResponse<Quotation>> {
   const res = await apiClient.get<ListResponse<Quotation>>('/m4/v1/quotations', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function getQuotation(id: number): Promise<Quotation> {
@@ -80,7 +80,7 @@ export async function fetchInvoices(params?: {
   search?: string
 }): Promise<ListResponse<Invoice>> {
   const res = await apiClient.get<ListResponse<Invoice>>('/m4/v1/invoices', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function getInvoice(id: number): Promise<Invoice> {
@@ -110,7 +110,7 @@ export async function fetchAdminOrders(params?: {
   search?: string
 }): Promise<ListResponse<Order>> {
   const res = await apiClient.get<ListResponse<Order>>('/m4/v1/admin/orders', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function getOrder(id: number): Promise<Order> {
@@ -135,7 +135,7 @@ export async function createOrder(data: {
   idempotency_key?: string
   items: { product_id: number; quantity: number }[]
 }): Promise<Order> {
-  const res = await apiClient.post<SuccessResponse<Order>>('/m4/v1/orders', data)
+  const res = await apiClient.post<SuccessResponse<Order>>('/m4/v1/partner/orders', data)
   return res.data.data
 }
 

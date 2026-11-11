@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/auth/AuthContext'
 import { fetchRoles } from './api'
-import { fetchActiveUnits } from '@/features/m2/api'
+import { fetchAllTenantUnits } from '@/features/m2/api'
 import type { Role } from './types'
 import type { BusinessUnit } from '@/features/m2/types'
 import { parseApiError } from '@/lib/api-error'
@@ -52,7 +52,7 @@ export function useUnitOptions() {
   const [units, setUnits] = useState<BusinessUnit[]>([])
   useEffect(() => {
     let alive = true
-    fetchActiveUnits().then((u) => { if (alive) setUnits(u ?? []) }).catch(() => {})
+    fetchAllTenantUnits().then((r) => { if (alive) setUnits(r ?? []) }).catch(() => {})
     return () => { alive = false }
   }, [])
   const options = [

@@ -9,6 +9,9 @@ import type {
   Division,
   CreateDivisionData,
   UpdateDivisionData,
+  BusinessCategory,
+  CreateCategoryData,
+  UpdateCategoryData,
 } from './types'
 
 export async function fetchAdminUnits(params?: {
@@ -18,18 +21,35 @@ export async function fetchAdminUnits(params?: {
   category?: string
   active_only?: boolean
 }): Promise<ListResponse<BusinessUnit>> {
+  const safeParams = { ...params, per_page: Math.min(params?.per_page ?? 20, 100) }
   const res = await apiClient.get<ListResponse<BusinessUnit>>(
     '/m2/v1/admin/business-units',
-    { params },
+    { params: safeParams },
   )
-  return res.data
+  // Some older API responses return data: null when a tenant has no units.
+  // Keep list contracts stable so pages can safely call .map().
+  return {
+    ...res.data,
+    data: Array.isArray(res.data?.data) ? res.data.data : [],
+  }
+}
+
+
+export async function fetchTenantUnits(params?: {
+  page?: number
+  per_page?: number
+  search?: string
+}): Promise<ListResponse<BusinessUnit>> {
+  const safeParams = { ...params, per_page: Math.min(params?.per_page ?? 20, 100) }
+  const res = await apiClient.get<ListResponse<BusinessUnit>>('/m2/v1/admin/business-units', { params: safeParams })
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function fetchActiveUnits(): Promise<BusinessUnit[]> {
   const res = await apiClient.get<SuccessResponse<BusinessUnit[]>>(
     '/m2/v1/business-units',
   )
-  return res.data.data
+  return Array.isArray(res.data?.data) ? res.data.data : []
 }
 
 export async function createUnit(data: CreateUnitData): Promise<BusinessUnit> {
@@ -77,10 +97,11 @@ export async function fetchDivisions(params?: {
   per_page?: number
   search?: string
 }): Promise<ListResponse<Division>> {
+  const safeParams = { ...params, per_page: Math.min(params?.per_page ?? 20, 100) }
   const res = await apiClient.get<ListResponse<Division>>('/m2/v1/divisions', {
-    params,
+    params: safeParams,
   })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function createDivision(data: CreateDivisionData): Promise<Division> {
@@ -114,3 +135,58 @@ export async function deleteDivision(id: number): Promise<void> {
   await apiClient.delete(`/m2/v1/divisions/${id}`)
 }
 
+
+
+export async function fetchCategories(params?: {
+  unit_usaha_id?: number
+  page?: number
+  per_page?: number
+  search?: string
+}): Promise<ListResponse<BusinessCategory>> {
+  const safeParams = { ...params, per_page: Math.min(params?.per_page ?? 20, 100) }
+  const res = await apiClient.get<ListResponse<BusinessCategory>>('/m2/v1/categories', { params: safeParams })
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
+}
+
+export async function createCategory(data: CreateCategoryData): Promise<BusinessCategory> {
+  const res = await apiClient.post<SuccessResponse<BusinessCategory>>('/m2/v1/categories', data)
+  return res.data.data
+}
+
+export async function updateCategory(id: number, data: UpdateCategoryData): Promise<BusinessCategory> {
+  const res = await apiClient.patch<SuccessResponse<BusinessCategory>>(`/m2/v1/categories/${id}`, data)
+  return res.data.data
+}
+
+export async function deactivateCategory(id: number): Promise<void> {
+  await apiClient.post(`/m2/v1/categories/${id}/deactivate`)
+}
+
+export async function activateCategory(id: number): Promise<void> {
+  await apiClient.post(`/m2/v1/categories/${id}/activate`)
+}
+
+
+/** Fetch every page without exceeding the API's 100-row page limit. */
+async function fetchAllPages<T>(fetchPage: (page: number) => Promise<ListResponse<T>>): Promise<T[]> {
+  const first = await fetchPage(1)
+  const result = [...(first.data ?? [])]
+  const totalPages = Math.max(1, first.meta?.total_pages ?? 1)
+  for (let page = 2; page <= totalPages; page += 1) {
+    const next = await fetchPage(page)
+    result.push(...(next.data ?? []))
+  }
+  return result
+}
+
+export function fetchAllTenantUnits(): Promise<BusinessUnit[]> {
+  return fetchAllPages((page) => fetchTenantUnits({ page, per_page: 100 }))
+}
+
+export function fetchAllCategories(unit_usaha_id?: number): Promise<BusinessCategory[]> {
+  return fetchAllPages((page) => fetchCategories({ page, per_page: 100, unit_usaha_id }))
+}
+
+export function fetchAllDivisions(): Promise<Division[]> {
+  return fetchAllPages((page) => fetchDivisions({ page, per_page: 100 }))
+}

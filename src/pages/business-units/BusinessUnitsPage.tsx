@@ -63,11 +63,7 @@ function getUnitColumns(onEdit: (u: BusinessUnit) => void, onToggle: (u: Busines
   return [
     {
       key: 'name', header: 'Unit Usaha',
-      render: (u: BusinessUnit) => <div><p className="font-medium text-dark-100">{u.name}</p><p className="text-xs text-dark-400">{u.category || 'Umum'}</p></div>,
-    },
-    {
-      key: 'contact', header: 'Kontak',
-      render: (u: BusinessUnit) => <div className="text-xs text-dark-300"><p>{u.contact_email || '—'}</p><p className="text-dark-500">{u.contact_phone || '—'}</p></div>,
+      render: (u: BusinessUnit) => <div><p className="font-medium text-dark-100">{u.name}</p><p className="text-xs text-dark-400">{u.description || 'Unit usaha Partner'}</p></div>,
     },
     {
       key: 'status', header: 'Status',
@@ -134,7 +130,7 @@ export function BusinessUnitsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Unit Usaha"
-        description="Kelola portofolio unit bisnis, kategori, dan status operasional"
+        description="Kelola nama dan deskripsi unit usaha perusahaan."
         actions={<PermissionGate permission="m2.business_units.create"><Button onClick={() => { setSelectedUnit(null); setModalOpen(true) }}><Plus size={16} /> Tambah Unit Usaha</Button></PermissionGate>}
       />
       <div className="max-w-xs"><Input placeholder="Cari unit usaha..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} /></div>

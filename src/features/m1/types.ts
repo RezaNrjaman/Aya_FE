@@ -20,9 +20,9 @@ export interface CreateUserData {
   password: string
   name: string
   phone?: string
-  division_id?: number
-  role?: string
-  unit_usaha_id?: number
+  division_id: number
+  role: string
+  unit_usaha_id: number
 }
 
 export interface UpdateUserData {
@@ -44,6 +44,12 @@ export interface Role {
   name: string
   display_name: string
   description?: string
+  partner_id?: number
+  is_system?: boolean
+  division_id?: number
+  division_name?: string
+  unit_name?: string
+  category_name?: string
   is_active: boolean
   /** Backend returns full permission objects from GET /m1/v1/roles. */
   permissions?: Permission[]
@@ -53,7 +59,8 @@ export interface CreateRoleData {
   name: string
   display_name: string
   description?: string
-  /** Optional initial permission set (e.g. copied from another role). */
+  division_id: number
+  /** Explicit initial permissions; Partner-created roles must have at least one. */
   permission_keys?: string[]
 }
 

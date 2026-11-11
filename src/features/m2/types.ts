@@ -3,10 +3,6 @@
 export interface BusinessUnit {
   id: number
   name: string
-  category_id?: number
-  category?: string
-  division_id?: number
-  division?: string
   description?: string
   contact_email?: string
   contact_phone?: string
@@ -19,26 +15,42 @@ export interface BusinessUnit {
 
 export interface CreateUnitData {
   name: string
-  category?: string
-  division?: string
   description?: string
-  contact_email?: string
-  contact_phone?: string
-  address?: string
 }
 
 export interface UpdateUnitData {
   name?: string
-  category?: string
-  division?: string
   description?: string
-  contact_email?: string
-  contact_phone?: string
-  address?: string
+}
+
+export interface BusinessCategory {
+  id: number
+  partner_id?: number
+  unit_usaha_id: number
+  name: string
+  description?: string
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CreateCategoryData {
+  unit_usaha_id: number
+  name: string
+  description?: string
+}
+
+export interface UpdateCategoryData {
+  name?: string
+  description?: string
 }
 
 export interface Division {
   id: number
+  unit_usaha_id: number
+  category_id: number
+  unit_name?: string
+  category_name?: string
   name: string
   description?: string
   is_active: boolean
@@ -47,11 +59,15 @@ export interface Division {
 }
 
 export interface CreateDivisionData {
+  unit_usaha_id: number
+  category_id: number
   name: string
   description?: string
 }
 
 export interface UpdateDivisionData {
+  unit_usaha_id?: number
+  category_id?: number
   name?: string
   description?: string
 }

@@ -11,3 +11,5 @@ export { ConfirmDialog } from './ConfirmDialog'
 export { LoadingScreen } from './LoadingScreen'
 export { ToastProvider, useToast } from './Toast'
 
+export { SearchableSelect } from './SearchableSelect'
+export type { SearchableOption } from './SearchableSelect'

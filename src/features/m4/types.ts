@@ -5,6 +5,7 @@ export interface Product {
   unit_usaha_id: number
   partner_id?: number
   name: string
+  product_type: 'barang' | 'jasa'
   category?: string
   description?: string
   price: number
@@ -19,6 +20,7 @@ export interface CreateProductData {
   unit_usaha_id: number
   partner_id?: number
   name: string
+  product_type: 'barang' | 'jasa'
   category?: string
   description?: string
   price: number

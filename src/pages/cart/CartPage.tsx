@@ -1,11 +1,11 @@
 /** M5-006 / M5-007 / M5-008: Shopping Cart & Checkout Page */
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, Trash2, Plus, Minus, CheckCircle, ArrowRight } from 'lucide-react'
 import { Button, Input, Textarea, useToast } from '@/components/ui'
 import { useCart } from '@/features/m5/CartContext'
 import { checkoutCart } from '@/features/m5/api'
-import type { CartItem, CheckoutResult } from '@/features/m5/types'
+import type { CartItem, CheckoutData, CheckoutResult } from '@/features/m5/types'
 
 function formatRupiah(amount: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount)
@@ -53,11 +53,26 @@ function CartItemRow({
 function CheckoutCard({
   totalAmount, totalItems, onCheckout, loading,
 }: {
-  totalAmount: number; totalItems: number; onCheckout: (custId: number, notes: string) => Promise<void>; loading: boolean
+  totalAmount: number
+  totalItems: number
+  onCheckout: (data: Omit<CheckoutData, 'idempotency_key'>) => Promise<void>
+  loading: boolean
 }) {
-  const [custId, setCustId] = useState('1')
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerAddress, setCustomerAddress] = useState('')
   const [notes, setNotes] = useState('')
-  const submit = (e: FormEvent) => { e.preventDefault(); onCheckout(parseInt(custId, 10) || 1, notes) }
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    void onCheckout({
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      customer_address: customerAddress,
+      notes,
+    })
+  }
 
   return (
     <form onSubmit={submit} className="glass-card p-6 rounded-2xl space-y-4">
@@ -66,14 +81,19 @@ function CheckoutCard({
         <div className="flex justify-between text-dark-400"><span>Total Komoditas:</span><span className="font-mono text-dark-200">{totalItems} item</span></div>
         <div className="flex justify-between text-dark-100 font-semibold text-sm"><span>Total Tagihan:</span><span className="font-mono text-brand-400 text-base">{formatRupiah(totalAmount)}</span></div>
       </div>
-      <Input label="ID Pelanggan (B2B Client ID)" type="number" value={custId} onChange={(e) => setCustId(e.target.value)} required />
-      <Textarea label="Catatan Pesanan (Opsional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Instruksi pengiriman atau rincian PO..." />
+      <div className="space-y-3">
+        <Input label="Nama Lengkap" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
+        <Input label="Email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} required />
+        <Input label="Nomor Telepon" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+        <Textarea label="Alamat (Opsional)" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
+        <Textarea label="Catatan Pesanan (Opsional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Instruksi pengiriman atau rincian PO..." />
+      </div>
       <Button type="submit" variant="primary" className="w-full" loading={loading}><CheckCircle size={16} /> Buat Pesanan Resmi</Button>
     </form>
   )
 }
 
-function CheckoutSuccessModal({ result, onClose }: { result: CheckoutResult; onClose: () => void }) {
+function CheckoutSuccessModal({ result, onClose, onTrack }: { result: CheckoutResult; onClose: () => void; onTrack: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="glass-card w-full max-w-md p-6 space-y-4 text-center">
@@ -81,7 +101,10 @@ function CheckoutSuccessModal({ result, onClose }: { result: CheckoutResult; onC
         <h3 className="font-heading text-lg font-bold text-dark-100">Pesanan Berhasil Dibuat!</h3>
         <p className="text-xs text-dark-300">Nomor Pesanan: <span className="font-mono font-bold text-brand-400">{result.order_no}</span></p>
         <p className="text-xs text-dark-300">Total Tagihan: <span className="font-mono font-bold text-dark-100">{formatRupiah(result.total_amount)}</span></p>
-        <div className="pt-2"><Button variant="primary" className="w-full" onClick={onClose}>Selesai & Lanjut Belanja</Button></div>
+        <div className="pt-2 space-y-2">
+          <Button variant="primary" className="w-full" onClick={onTrack}>Lacak Pesanan</Button>
+          <Button variant="tertiary" className="w-full" onClick={onClose}>Selesai & Lanjut Belanja</Button>
+        </div>
       </div>
     </div>
   )
@@ -91,13 +114,18 @@ function useCheckoutHandler(reload: () => Promise<void>) {
   const { toast } = useToast()
   const [checkingOut, setCheckingOut] = useState(false)
   const [result, setResult] = useState<CheckoutResult | null>(null)
+  const idempotencyKey = useRef<string | null>(null)
 
-  const handleCheckout = async (customerId: number, notes: string) => {
+  const handleCheckout = async (data: Omit<CheckoutData, 'idempotency_key'>) => {
     setCheckingOut(true)
     try {
-      const key = 'checkout-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
-      const res = await checkoutCart({ customer_id: customerId, notes, idempotency_key: key })
-      setResult(res); await reload(); toast('success', `Pesanan ${res.order_no} berhasil dibuat!`)
+      idempotencyKey.current ??= 'checkout-' + crypto.randomUUID()
+      const res = await checkoutCart({ ...data, idempotency_key: idempotencyKey.current })
+      sessionStorage.setItem('araya_last_customer_email', data.customer_email)
+      idempotencyKey.current = null
+      setResult(res)
+      toast('success', `Pesanan ${res.order_no} berhasil dibuat!`)
+      try { await reload() } catch { /* Order is already committed; do not report checkout failure. */ }
     } catch (err: unknown) { toast('error', err instanceof Error ? err.message : 'Checkout gagal') }
     finally { setCheckingOut(false) }
   }
@@ -108,7 +136,13 @@ export function CartPage() {
   const nav = useNavigate()
   const { cart, updateItem, removeItem, clearAll, refreshCart } = useCart()
   const { checkingOut, result, setResult, handleCheckout } = useCheckoutHandler(refreshCart)
-  if (!cart || cart.items.length === 0) return <EmptyCartView />
+  const cartItems = Array.isArray(cart?.items) ? cart.items : []
+  if (cartItems.length === 0) {
+    if (result) {
+      return <CheckoutSuccessModal result={result} onClose={() => { setResult(null); nav('/catalog') }} onTrack={() => nav(`/track-order?order_no=${encodeURIComponent(result.order_no)}&email=${encodeURIComponent(sessionStorage.getItem('araya_last_customer_email') || '')}`)} />
+    }
+    return <EmptyCartView />
+  }
 
   return (
     <div className="space-y-6">
@@ -118,11 +152,11 @@ export function CartPage() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-3">
-          {cart.items.map((it) => <CartItemRow key={it.id || it.product_id} it={it} onUpdate={updateItem} onRemove={removeItem} />)}
+          {cartItems.map((it) => <CartItemRow key={it.id || it.product_id} it={it} onUpdate={updateItem} onRemove={removeItem} />)}
         </div>
         <div><CheckoutCard totalAmount={cart.total_amount} totalItems={cart.total_items} onCheckout={handleCheckout} loading={checkingOut} /></div>
       </div>
-      {result && <CheckoutSuccessModal result={result} onClose={() => { setResult(null); nav('/catalog') }} />}
+      {result && <CheckoutSuccessModal result={result} onClose={() => { setResult(null); nav('/catalog') }} onTrack={() => nav(`/track-order?order_no=${encodeURIComponent(result.order_no)}&email=${encodeURIComponent(sessionStorage.getItem('araya_last_customer_email') || '')}`)} />}
     </div>
   )
 }

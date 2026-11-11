@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useAuth } from '@/features/auth/AuthContext'
-import { NAV_GROUPS, type NavGroup, type NavItem } from './nav-items'
+import { getNavGroups, type NavGroup, type NavItem } from './nav-items'
 
 function SidebarMobileHeader({ onClose }: { onClose: () => void }) {
   return (
@@ -59,6 +59,9 @@ function NavGroupSection({
 }
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { user } = useAuth()
+  const groups = getNavGroups(user?.role === 'admin')
+
   return (
     <>
       {open && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />}
@@ -69,7 +72,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       )}>
         <SidebarMobileHeader onClose={onClose} />
         <nav className="px-3 pb-6 space-y-5">
-          {NAV_GROUPS.map((g) => <NavGroupSection key={g.title} group={g} onClose={onClose} />)}
+          {groups.map((g) => <NavGroupSection key={g.title} group={g} onClose={onClose} />)}
         </nav>
       </aside>
     </>

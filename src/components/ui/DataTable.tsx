@@ -45,15 +45,18 @@ function TableRows<T>({ columns, data, keyExtractor }: { columns: Column<T>[]; d
   )
 }
 
-export function DataTable<T>({ columns, data, keyExtractor, loading, error, emptyMessage = 'Tidak ada data.' }: { columns: Column<T>[]; data: T[]; keyExtractor: (row: T) => string; loading?: boolean; error?: string | null; emptyMessage?: string }) {
+export function DataTable<T>({ columns, data, keyExtractor, loading, error, emptyMessage = 'Tidak ada data.' }: { columns: Column<T>[]; data: T[] | null | undefined; keyExtractor: (row: T) => string; loading?: boolean; error?: string | null; emptyMessage?: string }) {
+  // API list endpoints must ideally return [], but tolerate legacy/null responses
+  // here as a final shared safety boundary for every table in the application.
+  const safeData: T[] = Array.isArray(data) ? data : []
   if (loading) return <TableState>Memuat data...</TableState>
   if (error) return <TableState variant="error">{error}</TableState>
-  if (data.length === 0) return <TableState>{emptyMessage}</TableState>
+  if (safeData.length === 0) return <TableState>{emptyMessage}</TableState>
   return (
     <div className="overflow-x-auto rounded-xl glass-card">
       <table className="w-full text-sm text-left">
         <TableHead columns={columns} />
-        <TableRows columns={columns} data={data} keyExtractor={keyExtractor} />
+        <TableRows columns={columns} data={safeData} keyExtractor={keyExtractor} />
       </table>
     </div>
   )

@@ -1,18 +1,17 @@
 /** Login page */
 import { useState, useEffect, type FormEvent } from 'react'
-import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthContext'
 import { parseApiError } from '@/lib/api-error'
 import { Button, Input } from '@/components/ui'
+import { getNavGroups } from '@/components/layout/nav-items'
 function useLoginForm() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -20,7 +19,27 @@ function useLoginForm() {
     setLoading(true)
     try {
       await login({ email, password })
-      navigate(from, { replace: true })
+      // Login resolves to the first permitted page. The role is read from the
+      // refreshed profile after login, never from an untrusted form field.
+      const { fetchProfile } = await import('@/features/auth/api')
+      const profile = await fetchProfile()
+      const role = String(profile.role || '').toLowerCase()
+      const isPlatform = role === 'admin' || role === 'super_admin'
+      const groups = getNavGroups(isPlatform)
+      let landing = ''
+      if (role === 'partner' && profile.permissions?.includes('m2.dashboard.read')) {
+        landing = '/dashboard'
+      } else {
+        // Every non-owner role starts at the first permitted operational menu.
+        for (const group of groups) {
+          const allowed = group.items.find((item) =>
+            item.path !== '/dashboard' &&
+            (!item.permission || profile.permissions?.includes(item.permission))
+          )
+          if (allowed) { landing = allowed.path; break }
+        }
+      }
+      navigate(landing || '/forbidden', { replace: true })
     } catch (err) {
       setError(parseApiError(err).message)
     } finally {

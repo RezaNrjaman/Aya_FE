@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Eye, CheckCircle2, AlertOctagon, RotateCcw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Eye, CheckCircle2, AlertOctagon, RotateCcw, ExternalLink } from 'lucide-react'
 import {
   PageHeader,
   Button,
@@ -13,13 +14,11 @@ import {
 import { PermissionGate } from '@/features/auth/RouteGuard'
 import {
   fetchPartners,
-  registerPartner,
   verifyPartner,
   suspendPartner,
   reactivatePartner,
 } from '@/features/m3/api'
-import type { Partner, RegisterPartnerData } from '@/features/m3/types'
-import { PartnerRegisterModal } from './PartnerRegisterModal'
+import type { Partner } from '@/features/m3/types'
 import { PartnerVerifyModal } from './PartnerVerifyModal'
 import { PartnerSuspendModal } from './PartnerSuspendModal'
 import { PartnerDetailModal } from './PartnerDetailModal'
@@ -126,9 +125,6 @@ function StatusTabs({ current, onChange }: { current: string; onChange: (s: stri
 
 function usePartnerActions(reload: () => void) {
   const { toast } = useToast()
-  const handleRegister = async (d: RegisterPartnerData) => {
-    await registerPartner(d); toast('success', 'Pendaftaran mitra berhasil diajukan'); reload()
-  }
   const handleVerify = async (id: number, act: 'approve' | 'reject', r?: string) => {
     await verifyPartner(id, act, r)
     toast('success', act === 'approve' ? 'Mitra berhasil disetujui' : 'Pendaftaran mitra ditolak')
@@ -140,11 +136,10 @@ function usePartnerActions(reload: () => void) {
   const handleReactivate = async (id: number) => {
     await reactivatePartner(id); toast('success', 'Mitra berhasil diaktifkan kembali'); reload()
   }
-  return { handleRegister, handleVerify, handleSuspend, handleReactivate }
+  return { handleVerify, handleSuspend, handleReactivate }
 }
 
 interface ModalsState {
-  regOpen: boolean; setRegOpen: (v: boolean) => void
   detailP: Partner | null; setDetailP: (p: Partner | null) => void
   verifyP: Partner | null; setVerifyP: (p: Partner | null) => void
   suspendP: Partner | null; setSuspendP: (p: Partner | null) => void
@@ -154,7 +149,6 @@ interface ModalsState {
 function PartnerModals({ s, a }: { s: ModalsState; a: ReturnType<typeof usePartnerActions> }) {
   return (
     <>
-      <PartnerRegisterModal open={s.regOpen} onClose={() => s.setRegOpen(false)} onSubmit={a.handleRegister} />
       <PartnerDetailModal partner={s.detailP} onClose={() => s.setDetailP(null)} />
       <PartnerVerifyModal partner={s.verifyP} onClose={() => s.setVerifyP(null)} onVerify={a.handleVerify} />
       <PartnerSuspendModal partner={s.suspendP} onClose={() => s.setSuspendP(null)} onSuspend={a.handleSuspend} />
@@ -182,7 +176,6 @@ function PartnerToolbar({ status, onStatus, search, onSearch }: { status: string
 export function PartnersPage() {
   const { partners, loading, search, setSearch, status, setStatus, page, setPage, totalPages, loadData } = usePartners()
   const actions = usePartnerActions(loadData)
-  const [regOpen, setRegOpen] = useState(false)
   const [detailP, setDetailP] = useState<Partner | null>(null)
   const [verifyP, setVerifyP] = useState<Partner | null>(null)
   const [suspendP, setSuspendP] = useState<Partner | null>(null)
@@ -191,11 +184,18 @@ export function PartnersPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Manajemen Mitra Bisnis" description="Kelola pendaftaran, verifikasi, dan status aktif mitra" actions={<Button onClick={() => setRegOpen(true)}><Plus size={16} /> Daftar Mitra Baru</Button>} />
+      <PageHeader
+        title="Manajemen Partner"
+        description="Super Admin hanya memverifikasi, menolak, menangguhkan, dan mengaktifkan kembali Partner."
+        actions={<Link to="/partner/register" className="inline-flex items-center gap-2 rounded-lg border border-glass-border px-3 py-2 text-sm text-dark-200 hover:text-dark-100 hover:bg-white/5"><ExternalLink size={15} /> Tambah Mitra (Pendaftaran Publik)</Link>}
+      />
+      <div className="rounded-lg border border-glass-border bg-white/[0.03] px-4 py-3 text-xs text-dark-300">
+        Partner baru mendaftar sendiri melalui portal publik. Setelah statusnya disetujui, pemilik perusahaan mengaktivasi akun dan mengatur password sendiri.
+      </div>
       <PartnerToolbar status={status} onStatus={(s) => { setStatus(s); setPage(1) }} search={search} onSearch={(q) => { setSearch(q); setPage(1) }} />
       <DataTable columns={columns} data={partners} keyExtractor={(p) => String(p.id)} loading={loading} emptyMessage="Belum ada data mitra." />
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-      <PartnerModals s={{ regOpen, setRegOpen, detailP, setDetailP, verifyP, setVerifyP, suspendP, setSuspendP, reactivateP, setReactivateP }} a={actions} />
+      <PartnerModals s={{ detailP, setDetailP, verifyP, setVerifyP, suspendP, setSuspendP, reactivateP, setReactivateP }} a={actions} />
     </div>
   )
 }

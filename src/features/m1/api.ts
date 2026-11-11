@@ -84,7 +84,7 @@ export async function fetchAuditLogs(params?: {
   per_page?: number
 }): Promise<ListResponse<AuditLog>> {
   const res = await apiClient.get<ListResponse<AuditLog>>('/m1/v1/audit-logs', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function changePassword(data: ChangePasswordData): Promise<void> {

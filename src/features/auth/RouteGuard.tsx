@@ -42,3 +42,29 @@ export function RequirePermission({ permission, children }: { permission: string
   if (!hasPermission(permission)) return <ForbiddenPage />
   return <>{children}</>
 }
+
+
+/**
+ * Explicit workspace boundary for the UI. Backend middleware remains the
+ * security boundary; this prevents platform administrators from navigating
+ * into tenant operational screens and vice versa.
+ */
+export function RequireWorkspace({
+  workspace,
+  children,
+}: {
+  workspace: 'platform' | 'partner'
+  children: React.ReactNode
+}) {
+  const { user } = useAuth()
+  const role = user?.role?.toLowerCase() ?? ''
+  const isPlatform = role === 'admin' || role === 'super_admin'
+
+  if (workspace === 'platform' && !isPlatform) {
+    return <Navigate to="/forbidden" replace />
+  }
+  if (workspace === 'partner' && isPlatform) {
+    return <Navigate to="/forbidden" replace />
+  }
+  return <>{children}</>
+}

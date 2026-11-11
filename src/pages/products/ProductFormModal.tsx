@@ -1,19 +1,19 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { Button, Input, Select, Textarea } from '@/components/ui'
-import { fetchActiveUnits } from '@/features/m2/api'
+import { fetchAllTenantUnits } from '@/features/m2/api'
 import type { BusinessUnit } from '@/features/m2/types'
 import type { Product, CreateProductData } from '@/features/m4/types'
 
 function useProductForm(initial: Product | null, onSubmit: (d: CreateProductData) => Promise<void>, onClose: () => void) {
-  const [form, setForm] = useState<CreateProductData>({ unit_usaha_id: 1, name: '', category: 'Barang', description: '', price: 0, stock: 0 })
+  const [form, setForm] = useState<CreateProductData>({ unit_usaha_id: 0, name: '', product_type: 'barang', category: '', description: '', price: 0, stock: 0 })
   const [units, setUnits] = useState<BusinessUnit[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchActiveUnits().then((u) => { setUnits(u); if (u.length > 0 && !initial) setForm((f) => ({ ...f, unit_usaha_id: u[0].id })) }).catch(() => {})
+    fetchAllTenantUnits().then((u) => { setUnits(u); if (u.length > 0 && !initial) setForm((f) => ({ ...f, unit_usaha_id: u[0].id })) }).catch(() => {})
     if (initial) {
-      setForm({ unit_usaha_id: initial.unit_usaha_id, name: initial.name, category: initial.category || 'Barang', description: initial.description || '', price: initial.price, stock: initial.stock })
+      setForm({ unit_usaha_id: initial.unit_usaha_id, name: initial.name, product_type: initial.product_type || 'barang', category: initial.category || '', description: initial.description || '', price: initial.price, stock: initial.stock })
     }
   }, [initial])
 
@@ -27,17 +27,22 @@ function useProductForm(initial: Product | null, onSubmit: (d: CreateProductData
 }
 
 function ProductFields({ form, setForm, units }: { form: CreateProductData; setForm: (f: CreateProductData) => void; units: BusinessUnit[] }) {
-  const unitOpts = units.map((u) => ({ value: String(u.id), label: u.name }))
+  const unitOpts = [{ value: '0', label: 'Pilih unit usaha' }, ...units.map((u) => ({ value: String(u.id), label: u.name }))]
   return (
     <>
+      <Select label="Jenis" value={form.product_type} onChange={(e) => setForm({ ...form, product_type: e.target.value as 'barang' | 'jasa', stock: e.target.value === 'jasa' ? 0 : form.stock })} options={[{ value: 'barang', label: 'Barang' }, { value: 'jasa', label: 'Jasa' }]} />
       <Input label="Nama Produk / Layanan" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
       <div className="grid grid-cols-2 gap-3">
         <Select label="Unit Usaha Pemilik" value={String(form.unit_usaha_id)} onChange={(e) => setForm({ ...form, unit_usaha_id: parseInt(e.target.value, 10) })} options={unitOpts} />
-        <Input label="Kategori" placeholder="contoh: Material / Software" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+        <Input label="Kategori Produk (Opsional)" placeholder="contoh: Material / Software" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Input label="Harga (Rupiah)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value, 10) || 0 })} required />
-        <Input label="Stok Tersedia" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: parseInt(e.target.value, 10) || 0 })} required />
+        {form.product_type === 'barang' ? (
+          <Input label="Stok Tersedia" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: parseInt(e.target.value, 10) || 0 })} required />
+        ) : (
+          <div className="text-xs text-dark-400 flex items-center">Jasa tidak menggunakan pengelolaan stok barang.</div>
+        )}
       </div>
       <Textarea label="Deskripsi Produk" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
     </>

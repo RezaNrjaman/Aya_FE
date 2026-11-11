@@ -16,7 +16,7 @@ export async function fetchPartners(params?: {
   status?: string
 }): Promise<ListResponse<Partner>> {
   const res = await apiClient.get<ListResponse<Partner>>('/m3/v1/partners', { params })
-  return res.data
+  return { ...res.data, data: Array.isArray(res.data?.data) ? res.data.data : [] }
 }
 
 export async function getPartner(id: number): Promise<PartnerDetail> {
@@ -47,7 +47,7 @@ export async function reactivatePartner(id: number): Promise<void> {
 
 export async function fetchVerifiedPartners(): Promise<Partner[]> {
   const res = await apiClient.get<SuccessResponse<Partner[]>>('/m3/v1/partners/verified')
-  return res.data.data
+  return Array.isArray(res.data?.data) ? res.data.data : []
 }
 
 /**

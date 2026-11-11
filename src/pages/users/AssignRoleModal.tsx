@@ -38,7 +38,9 @@ function RoleSummary({ roleName, roles }: { roleName: string; roles: ReturnType<
 
 export function AssignRoleModal({ user, onClose, onSubmit }: { user: User; onClose: () => void; onSubmit: (id: number, d: AssignRoleData) => Promise<void> }) {
   const { roleName, setRoleName, unitUsahaId, setUnitUsahaId, loading, error, submit } = useAssignRole(user, onSubmit, onClose)
-  const { roles, options, labelOf } = useRoleOptions()
+  const { roles, labelOf } = useRoleOptions()
+  const options = roles.filter(r => r.is_active && r.division_id === user.division_id)
+    .map(r => ({ value: r.name, label: r.display_name }))
   const units = useUnitOptions()
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="assign-role-title">
@@ -49,9 +51,10 @@ export function AssignRoleModal({ user, onClose, onSubmit }: { user: User; onClo
         </div>
         {error && <div role="alert" className="text-xs text-danger bg-danger/10 p-2 rounded">{error}</div>}
         <form onSubmit={submit} className="space-y-3">
-          <Select label="Role Pengguna" value={roleName} onChange={(e) => setRoleName(e.target.value)} options={options} placeholder="Pilih role" required />
+          <p className="text-xs text-dark-400">Divisi pengguna: {user.division_name || `#${user.division_id ?? 'belum ditentukan'}`}. Role hanya dapat dipilih dari divisi yang sama.</p>
+          <Select label="Role Pengguna" value={roleName} onChange={(e) => setRoleName(e.target.value)} options={options} placeholder="Pilih role pada divisi pengguna" required />
           <RoleSummary roleName={roleName} roles={roles} />
-          <Select label="Scope Unit Usaha" value={unitUsahaId} onChange={(e) => setUnitUsahaId(e.target.value)} options={units.options} />
+          <Select label="Unit Usaha" value={unitUsahaId} onChange={(e) => setUnitUsahaId(e.target.value)} options={units.options.filter(o => o.value === String(user.unit_usaha_id ?? ''))} disabled />
           <p className="text-xs text-dark-500">Perubahan langsung berlaku pada sesi pengguna yang sedang aktif.</p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="tertiary" type="button" onClick={onClose} disabled={loading}>Batal</Button>

@@ -77,7 +77,8 @@ function RoleCardHeader({ role, isOwn }: { role: Role; isOwn: boolean }) {
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-heading text-base font-semibold text-dark-100">{role.display_name}</h3>
           <span className="text-xs text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 font-mono">{role.name}</span>
-          {role.name === PROTECTED_ROLE && <span className="text-[11px] text-warning flex items-center gap-1"><Lock size={11} /> Role sistem</span>}
+          {(role.is_system || role.name === PROTECTED_ROLE) && <span className="text-[11px] text-warning flex items-center gap-1"><Lock size={11} /> Role sistem</span>}
+          {role.division_id && <span className="text-[11px] text-dark-400">· {role.unit_name || 'Unit'} / {role.category_name || 'Kategori'} / {role.division_name || `Divisi #${role.division_id}`}</span>}
           {isOwn && <span className="text-[11px] text-dark-400">· role Anda</span>}
         </div>
         {role.description && <p className="text-xs text-dark-400 mt-1">{role.description}</p>}
@@ -91,6 +92,7 @@ interface CardActions { onMatrix: () => void; onEdit: () => void; onToggle: () =
 
 function RoleCardActions({ role, isOwn, a }: { role: Role; isOwn: boolean; a: CardActions }) {
   const canToggle = role.name !== PROTECTED_ROLE && !(isOwn && role.is_active)
+  if (role.is_system) return null
   return (
     <PermissionGate permission={PERM_ROLES_MANAGE}>
       <div className="flex flex-wrap gap-2 pt-3 border-t border-glass-border">
@@ -166,7 +168,7 @@ export function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Manajemen Role & Hak Akses" description="Atur role dan hak akses setiap fitur aplikasi"
+      <PageHeader title="Manajemen Role & Hak Akses" description="Setiap role wajib berada pada satu divisi. Hak akses ditentukan untuk role di divisi tersebut."
         actions={<PermissionGate permission={PERM_ROLES_MANAGE}><Button onClick={() => d.setForm({ open: true, role: null })}><Plus size={16} /> Buat Role Baru</Button></PermissionGate>} />
       <AccessInfo />
       {loading && <div className="text-center py-8 text-dark-400">Memuat role...</div>}
@@ -174,7 +176,7 @@ export function RolesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {roles.map((r) => <RoleCard key={r.name} role={r} catalog={catalog} a={cardActions(r)} />)}
       </div>
-      {d.form.open && <RoleFormModal open role={d.form.role} roles={roles} onClose={() => d.setForm({ open: false, role: null })} onSubmit={actions.submitForm} />}
+      {d.form.open && <RoleFormModal open role={d.form.role} catalog={catalog} onClose={() => d.setForm({ open: false, role: null })} onSubmit={actions.submitForm} />}
       {d.matrixRole && <PermissionMatrixModal role={d.matrixRole} onClose={() => d.setMatrixRole(null)} onSave={actions.saveMatrix} />}
       <ConfirmDialog open={d.toggleRole !== null} title={d.toggleRole?.is_active ? 'Nonaktifkan Role' : 'Aktifkan Role'}
         message={d.toggleRole?.is_active ? `Pengguna dengan role "${d.toggleRole?.display_name}" akan langsung kehilangan seluruh hak aksesnya. Lanjutkan?` : `Hak akses role "${d.toggleRole?.display_name}" akan kembali berlaku. Lanjutkan?`}

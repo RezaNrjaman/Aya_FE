@@ -1,11 +1,11 @@
-/** UI-005: Nav items config — permission-aware menu */
+/** UI-005: Role-aware navigation — platform and tenant workspaces stay separate. */
 import {
   LayoutDashboard,
   Building2,
+  Layers,
   Network,
   Users,
   Handshake,
-  ShoppingCart,
   FileText,
   Receipt,
   Package,
@@ -28,21 +28,29 @@ export interface NavGroup {
   items: NavItem[]
 }
 
-export const NAV_GROUPS: NavGroup[] = [
+const platformDashboard: NavItem = { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, permission: 'm3.partners.read' }
+const partnerDashboard: NavItem = { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, permission: 'm2.dashboard.read' }
+
+const platformGroups: NavGroup[] = [
   {
-    title: 'Utama',
+    title: 'Platform',
     items: [
-      { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      platformDashboard,
+      { label: 'Verifikasi Partner', path: '/partners', icon: Handshake, permission: 'm3.partners.read' },
     ],
   },
+]
+
+const partnerGroups: NavGroup[] = [
+  { title: 'Utama', items: [partnerDashboard] },
   {
     title: 'Manajemen',
     items: [
       { label: 'Unit Usaha', path: '/business-units', icon: Building2, permission: 'm2.business_units.read' },
+      { label: 'Kategori', path: '/categories', icon: Layers, permission: 'm2.categories.read' },
       { label: 'Divisi', path: '/divisions', icon: Network, permission: 'm2.divisions.read' },
-      { label: 'Partner', path: '/partners', icon: Handshake, permission: 'm3.partners.read' },
+      { label: 'Role & Hak Akses', path: '/roles', icon: Shield, permission: 'm1.roles.read' },
       { label: 'Pengguna', path: '/users', icon: Users, permission: 'm1.users.read' },
-      { label: 'Roles', path: '/roles', icon: Shield, permission: 'm1.roles.read' },
     ],
   },
   {
@@ -58,14 +66,18 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: 'Portal',
     items: [
-      { label: 'Katalog', path: '/catalog', icon: Store },
-      { label: 'Keranjang', path: '/cart', icon: ShoppingCart },
+      { label: 'Lihat Katalog Publik', path: '/catalog', icon: Store },
+      { label: 'Permintaan Layanan', path: '/service-requests', icon: ClipboardList, permission: 'm5.services.manage' },
     ],
   },
   {
     title: 'Sistem',
     items: [
-      { label: 'Audit Log', path: '/audit-logs', icon: ScrollText, permission: 'm1.audit.read' },
+      { label: 'Audit Log Perusahaan', path: '/audit-logs', icon: ScrollText, permission: 'm1.audit.read' },
     ],
   },
 ]
+
+export function getNavGroups(isPlatformAdmin: boolean): NavGroup[] {
+  return isPlatformAdmin ? platformGroups : partnerGroups
+}

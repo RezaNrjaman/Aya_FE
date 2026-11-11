@@ -56,10 +56,10 @@ function getProductColumns(onEdit: (p: Product) => void, onToggle: (p: Product) 
   return [
     {
       key: 'name', header: 'Produk / Jasa',
-      render: (p: Product) => <div><p className="font-medium text-dark-100">{p.name}</p><p className="text-xs text-dark-400">{p.category || 'Umum'}</p></div>,
+      render: (p: Product) => <div><p className="font-medium text-dark-100">{p.name}</p><p className="text-xs text-dark-400">{p.product_type === 'jasa' ? 'Jasa' : 'Barang'} · {p.category || 'Umum'}</p></div>,
     },
     { key: 'price', header: 'Harga', render: (p: Product) => <span className="text-xs font-semibold text-dark-100">{formatRupiah(p.price)}</span> },
-    { key: 'stock', header: 'Stok', render: (p: Product) => <span className="text-xs text-dark-300">{p.stock} unit</span> },
+    { key: 'stock', header: 'Stok', render: (p: Product) => <span className="text-xs text-dark-300">{p.product_type === 'jasa' ? 'Tidak menggunakan stok' : `${p.stock} unit`}</span> },
     { key: 'status', header: 'Status', render: (p: Product) => <StatusBadge label={p.is_active ? 'Aktif' : 'Nonaktif'} variant={p.is_active ? 'success' : 'neutral'} /> },
     { key: 'actions', header: 'Aksi', className: 'text-right', render: (p: Product) => <ProductActions p={p} onEdit={onEdit} onToggle={onToggle} /> },
   ]
