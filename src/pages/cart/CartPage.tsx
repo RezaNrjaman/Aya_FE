@@ -137,7 +137,9 @@ export function CartPage() {
   const { cart, updateItem, removeItem, clearAll, refreshCart } = useCart()
   const { checkingOut, result, setResult, handleCheckout } = useCheckoutHandler(refreshCart)
   const cartItems = Array.isArray(cart?.items) ? cart.items : []
-  if (cartItems.length === 0) {
+  // Cart can be null while the guest cart is loading or when no session exists.
+  // Return the empty state before accessing aggregate fields on the cart object.
+  if (!cart || cartItems.length === 0) {
     if (result) {
       return <CheckoutSuccessModal result={result} onClose={() => { setResult(null); nav('/catalog') }} onTrack={() => nav(`/track-order?order_no=${encodeURIComponent(result.order_no)}&email=${encodeURIComponent(sessionStorage.getItem('araya_last_customer_email') || '')}`)} />
     }

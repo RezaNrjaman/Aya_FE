@@ -106,7 +106,7 @@ function QuotationFormFields({ form, units, customers, loadingUnits, unitsError 
             label="Unit Usaha"
             value={form.unitId}
             onChange={form.setUnitId}
-            options={units.map((u) => ({ value: String(u.id), label: `${u.name}${u.partner_name ? ` · ${u.partner_name}` : ''}` }))}
+            options={units.map((u) => ({ value: String(u.id), label: u.name }))}
             placeholder={loadingUnits ? 'Memuat unit usaha...' : units.length ? 'Pilih unit usaha' : 'Tidak ada unit usaha'}
             searchPlaceholder="Cari nama unit usaha..."
             disabled={loadingUnits || units.length === 0}
